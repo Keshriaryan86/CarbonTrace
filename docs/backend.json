@@ -1,0 +1,415 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user's profile information within the CarbonTrace application, linking all their activities and data.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address, used for login and notifications.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The user's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The user's last name."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "createdAt"
+      ]
+    },
+    "CarbonActivity": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CarbonActivity",
+      "type": "object",
+      "description": "Records a single carbon-emitting activity logged by a user, including its details and calculated emissions.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CarbonActivity entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who logged this activity."
+        },
+        "activityName": {
+          "type": "string",
+          "description": "A concise name for the activity, e.g., 'Drive to work'."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category of the activity, e.g., 'transportation', 'food_consumption'."
+        },
+        "details": {
+          "type": "object",
+          "description": "Structured data extracted by the AI, used for calculation.",
+          "properties": {
+            "itemName": {
+              "type": "string"
+            },
+            "quantity": {
+              "type": "number"
+            },
+            "unit": {
+              "type": "string"
+            }
+          }
+        },
+        "rawInput": {
+          "type": "string",
+          "description": "The original natural language input from the user."
+        },
+        "co2e": {
+          "type": "number",
+          "description": "The estimated CO2 equivalent emissions in kilograms (kg CO2e)."
+        },
+        "activityDate": {
+          "type": "string",
+          "description": "The date on which the activity occurred.",
+          "format": "date"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the activity was logged.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the activity, e.g., 'Pending', 'Committed'."
+        },
+        "txHash": {
+          "type": "string",
+          "description": "The blockchain transaction hash if the activity has been committed."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "activityName",
+        "category",
+        "details",
+        "rawInput",
+        "co2e",
+        "activityDate",
+        "createdAt",
+        "status"
+      ]
+    },
+    "EmissionFactor": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "EmissionFactor",
+      "type": "object",
+      "description": "Defines the standardized coefficients used to calculate CO2 emissions for various activities.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the EmissionFactor entity."
+        },
+        "category": {
+          "type": "string",
+          "description": "The broad category of activity this factor applies to, e.g., 'Transportation', 'Electricity'."
+        },
+        "subCategory": {
+          "type": "string",
+          "description": "A more specific classification within the category, e.g., 'Car - Gasoline', 'Electricity - Grid Mix'."
+        },
+        "factorValue": {
+          "type": "number",
+          "description": "The numerical emission factor (e.g., kg CO2e per unit of activity)."
+        },
+        "unit": {
+          "type": "string",
+          "description": "The unit of measurement to which the factor value applies, e.g., 'liter', 'kWh', 'kg'."
+        },
+        "source": {
+          "type": "string",
+          "description": "The source of the emission factor data, e.g., 'EPA', 'DEFRA'."
+        },
+        "validFrom": {
+          "type": "string",
+          "description": "The date from which this emission factor is considered valid.",
+          "format": "date"
+        },
+        "validTo": {
+          "type": "string",
+          "description": "The date until which this emission factor is considered valid (optional, for historical data management).",
+          "format": "date"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the emission factor was added to the system.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the emission factor was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "category",
+        "subCategory",
+        "factorValue",
+        "unit",
+        "source",
+        "validFrom",
+        "createdAt"
+      ]
+    },
+    "CarbonFootprintSummary": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CarbonFootprintSummary",
+      "type": "object",
+      "description": "Stores pre-calculated summaries of a user's carbon footprint over specific periods (daily, weekly, monthly, cumulative) for display and blockchain commitment.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CarbonFootprintSummary entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile this summary belongs to. (Relationship: UserProfile 1:N CarbonFootprintSummary)"
+        },
+        "summaryType": {
+          "type": "string",
+          "description": "The type of summary, e.g., 'daily', 'weekly', 'monthly', 'cumulative'."
+        },
+        "periodStart": {
+          "type": "string",
+          "description": "The start date of the period for which the footprint is summarized.",
+          "format": "date"
+        },
+        "periodEnd": {
+          "type": "string",
+          "description": "The end date of the period for which the footprint is summarized.",
+          "format": "date"
+        },
+        "totalEmissionsCo2e": {
+          "type": "number",
+          "description": "The total CO2 equivalent emissions in kilograms (kg CO2e) for the defined period."
+        },
+        "emissionsByCategory": {
+          "type": "string",
+          "description": "A JSON string representing an object that breaks down total emissions by category (e.g., '{\"Transportation\": 100, \"Electricity\": 50}')."
+        },
+        "isCommittedToBlockchain": {
+          "type": "boolean",
+          "description": "Indicates whether this summary (or a hash derived from it) has been committed to the blockchain."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when this summary was calculated or generated.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when this summary was last updated (e.g., recalcuated).",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "summaryType",
+        "periodStart",
+        "periodEnd",
+        "totalEmissionsCo2e",
+        "isCommittedToBlockchain",
+        "createdAt"
+      ]
+    },
+    "BlockchainCommitment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "BlockchainCommitment",
+      "type": "object",
+      "description": "Records the details of a carbon footprint summary that has been immutably stored on a public blockchain.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the BlockchainCommitment entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who initiated this blockchain commitment. (Relationship: UserProfile 1:N BlockchainCommitment)"
+        },
+        "carbonFootprintSummaryId": {
+          "type": "string",
+          "description": "Reference to the CarbonFootprintSummary whose data was committed to the blockchain. (Relationship: CarbonFootprintSummary 1:1 BlockchainCommitment)"
+        },
+        "committedHash": {
+          "type": "string",
+          "description": "The cryptographic hash of the carbon footprint data that was committed to the blockchain."
+        },
+        "transactionId": {
+          "type": "string",
+          "description": "The unique transaction identifier (Tx Hash) on the blockchain."
+        },
+        "blockNumber": {
+          "type": "number",
+          "description": "The block number on the blockchain where this transaction was recorded."
+        },
+        "committedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the blockchain transaction was confirmed.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the blockchain transaction, e.g., 'pending', 'confirmed', 'failed'."
+        },
+        "offChainDataHash": {
+          "type": "string",
+          "description": "An optional hash of the raw off-chain data that was used to generate the committedHash, for verification purposes without exposing raw data."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when this commitment record was created in the application's database.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when this commitment record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "carbonFootprintSummaryId",
+        "committedHash",
+        "transactionId",
+        "blockNumber",
+        "committedAt",
+        "status",
+        "createdAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information. This collection uses path-based ownership, accessible only by the owner (userId matching request.auth.uid).",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user, matching Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/carbonActivities/{activityId}",
+        "definition": {
+          "entityName": "CarbonActivity",
+          "schema": {
+            "$ref": "#/backend/entities/CarbonActivity"
+          },
+          "description": "Stores individual carbon-emitting activities logged by a user. Each document includes a denormalized 'userId' field for authorization independence, ensuring only the owner can access their activities.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user, matching Firebase Authentication UID, who owns this activity."
+            },
+            {
+              "name": "activityId",
+              "description": "The unique ID of the specific carbon activity."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/carbonFootprintSummaries/{summaryId}",
+        "definition": {
+          "entityName": "CarbonFootprintSummary",
+          "schema": {
+            "$ref": "#/backend/entities/CarbonFootprintSummary"
+          },
+          "description": "Stores pre-calculated carbon footprint summaries for a user over specific periods (e.g., daily, weekly). Each document includes a denormalized 'userId' field for authorization independence, ensuring only the owner can access their summaries.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user, matching Firebase Authentication UID, who owns this summary."
+            },
+            {
+              "name": "summaryId",
+              "description": "The unique ID for this carbon footprint summary record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/blockchainCommitments/{commitmentId}",
+        "definition": {
+          "entityName": "BlockchainCommitment",
+          "schema": {
+            "$ref": "#/backend/entities/BlockchainCommitment"
+          },
+          "description": "Records details of a user's carbon footprint summary committed to the blockchain. Each document includes a denormalized 'userId' field for authorization independence, ensuring only the owner can access their commitment records.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user, matching Firebase Authentication UID, who initiated this commitment."
+            },
+            {
+              "name": "commitmentId",
+              "description": "The unique ID for this blockchain commitment record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/emissionFactors/{emissionFactorId}",
+        "definition": {
+          "entityName": "EmissionFactor",
+          "schema": {
+            "$ref": "#/backend/entities/EmissionFactor"
+          },
+          "description": "Stores global, standardized emission factors used for calculating CO2 emissions. This collection is publicly readable by all authenticated users and represents shared, immutable data.",
+          "params": [
+            {
+              "name": "emissionFactorId",
+              "description": "The unique ID of the emission factor."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure for CarbonTrace prioritizes secure, scalable, and debuggable authorization by adhering strictly to the core design principles. The primary strategy for Authorization Independence is achieved through structural segregation and judicious denormalization. All user-specific data (`UserProfile`, `CarbonActivity`, `CarbonFootprintSummary`, `BlockchainCommitment`) is nested under a top-level `/users/{userId}` collection. This creates a clear ownership hierarchy where the `userId` in the path directly corresponds to the authenticated user (`request.auth.uid`).\n\nFor `CarbonActivity`, `CarbonFootprintSummary`, and `BlockchainCommitment`, the `userId` field is explicitly included in each document's schema and will be stored within the document itself, even though it's already present in the parent path. This denormalization is CRITICAL for Authorization Independence (Strategy A). It allows security rules to evaluate access based solely on the document's own fields and the request context (`request.auth.uid`), eliminating the need for expensive and complex `get()` calls to parent documents to check ownership. This ensures atomic operations (like creating a new activity) can proceed without fetching parent data for authorization checks.\n\nStructural Segregation (Strategy B) is applied by separating global, publicly readable data from private user data. `EmissionFactor` documents, which are standardized and accessible to all users for calculation purposes, reside in a top-level collection `/emissionFactors`. This collection has a distinct security posture (public read, restricted write) compared to user-owned data, simplifying security rules significantly by avoiding mixed access requirements within the same collection.\n\nThe `list` Query Authorization Principle (QAP) is inherently supported for user-specific data. By placing `CarbonActivity`, `CarbonFootprintSummary`, and `BlockchainCommitment` under `/users/{userId}/...`, any query for these collections will automatically be scoped to the authenticated user's `userId` (i.e., `request.auth.uid`). This means that `list` operations from the client will only ever return data belonging to the requesting user, preventing data leakage and making rules explicit and easy to write (e.g., `allow read: if request.auth.uid == userId;`). For `EmissionFactor`, a `list` query would allow all authenticated users to read all factors, which aligns with its global, public-read nature. The consistent naming conventions (`userId`, `activityId`, `summaryId`, `commitmentId`) and descriptive wildcards further enhance clarity and debuggability, making the authorization intent explicit throughout the structure."
+  }
+}
