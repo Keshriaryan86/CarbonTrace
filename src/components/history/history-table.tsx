@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   Table,
   TableBody,
@@ -12,7 +12,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { GitBranch, Loader2, MoreHorizontal, Copy, Leaf } from 'lucide-react';
+import { GitBranch, Loader2, MoreHorizontal, Copy, Leaf, Wallet } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +36,7 @@ import type { CarbonActivity } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { commitActivityToBlockchain } from '@/lib/blockchain-service';
+import { MetaMaskConnect } from '@/components/MetaMaskConnect';
 
 const categoryColors: { [key: string]: string } = {
   transportation: 'bg-blue-500/20 text-blue-300 border-blue-400/50',
@@ -56,6 +57,11 @@ export function HistoryTable() {
     const { toast } = useToast();
     const [committingId, setCommittingId] = useState<string | null>(null);
     const [activityToView, setActivityToView] = useState<CarbonActivity | null>(null);
+    const [walletAddress, setWalletAddress] = useState<string | null>(null);
+
+    const handleWalletConnected = useCallback((address: string) => {
+      setWalletAddress(address);
+    }, []);
 
     const activitiesQuery = useMemoFirebase(() => {
         if (!user || !firestore) return null;
@@ -69,11 +75,22 @@ export function HistoryTable() {
 
     const handleCommit = async (activityId: string) => {
         if (!user || !firestore) return;
+
+        // Guard: wallet must be connected first
+        if (!walletAddress) {
+          toast({
+            variant: 'destructive',
+            title: 'Wallet Not Connected',
+            description: 'Please connect your MetaMask wallet before committing to the blockchain.',
+          });
+          return;
+        }
+
         setCommittingId(activityId);
         
         try {
-            // 1. Simulate blockchain transaction using the service
-            const txHash = await commitActivityToBlockchain(activityId);
+            // 1. Submit real blockchain transaction via MetaMask
+            const txHash = await commitActivityToBlockchain(activityId, user.uid);
             
             // 2. Create the commitment record in Firestore (following backend.json schema)
             const commitmentRef = collection(firestore, 'users', user.uid, 'blockchainCommitments');
@@ -119,6 +136,15 @@ export function HistoryTable() {
 
   return (
     <>
+        {/* MetaMask wallet connection bar */}
+        <div className="flex items-center justify-between mb-4 p-3 rounded-lg border border-border/50 bg-card/50">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Wallet className="h-4 w-4" />
+            <span>Blockchain wallet required to commit activities on-chain</span>
+          </div>
+          <MetaMaskConnect onWalletConnected={handleWalletConnected} compact />
+        </div>
+
         <Card>
         <CardContent className="p-0">
             {isLoading && (
@@ -184,7 +210,7 @@ export function HistoryTable() {
                                     <Badge variant="secondary" className="font-code text-primary border-primary/50">
                                         {activity.txHash.slice(0, 8)}...{activity.txHash.slice(-6)}
                                     </Badge>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => copyTxHash(activity.txHash)}>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => copyTxHash(activity.txHash ?? '')}>
                                         <Copy className="h-3 w-3" />
                                     </Button>
                                 </div>
